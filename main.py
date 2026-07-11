@@ -1,3 +1,8 @@
+from dotenv import load_dotenv
+import os
+# Load environment variables from the root .env file
+load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), "..", ".env"))
+
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import pandas as pd
