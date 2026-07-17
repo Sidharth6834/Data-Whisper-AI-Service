@@ -55,6 +55,10 @@ def load_file(
             df = pd.read_csv(file_obj)
             
         elif ext in ['.xlsx', '.xls']:
+            if sheet_name is None:
+                sheets = get_excel_sheets(file_obj)
+                if sheets:
+                    sheet_name = sheets[0]
             df = pd.read_excel(file_obj, sheet_name=sheet_name)
             
         elif ext == '.json':
