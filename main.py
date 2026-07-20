@@ -32,6 +32,10 @@ app.add_middleware(
 def health_check():
     return {"status": "healthy"}
 
+@app.get("/")
+def read_root():
+    return {"status": "healthy", "service": "DataWhisperer AI Service"}
+
 # Store active dataframes in memory keyed by session_id
 dataframes = {}
 

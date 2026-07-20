@@ -13,10 +13,8 @@ from langchain_experimental.tools.python.tool import PythonAstREPLTool
 from langchain_experimental.utilities.python import PythonREPL
 from sandbox import PythonSandbox
 
-# Configure headless matplotlib backend for web safety
-import matplotlib
-matplotlib.use('Agg')
-import matplotlib.pyplot as plt
+# Configure headless matplotlib backend for web safety via environment variable
+os.environ['MPLBACKEND'] = 'Agg'
 
 def clean_code_query(query: str) -> str:
     query = query.strip()
@@ -304,6 +302,7 @@ def ask_question(agent: Any, question: str, dataframe: Optional[pd.DataFrame] = 
             if hasattr(tool, "globals") and isinstance(tool.globals, dict) and "df" in tool.globals:
                 tool.globals["df"] = dataframe
 
+    import matplotlib.pyplot as plt
     plt.close('all')
     
     has_chart_intent = detect_chart_intent(question)
@@ -376,4 +375,8 @@ def ask_question(agent: Any, question: str, dataframe: Optional[pd.DataFrame] = 
             "error": str(e)
         }
     finally:
-        plt.close('all')
+        try:
+            import matplotlib.pyplot as plt
+            plt.close('all')
+        except Exception:
+            pass
