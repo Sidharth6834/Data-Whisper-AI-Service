@@ -132,17 +132,17 @@ def create_agent(
         )
         agent_type = "tool-calling"
     elif provider == "Groq":
-        # Map deprecated model names (llama-3.3, llama3, mixtral) to active Groq versions
+        # Map deprecated model names (llama-3.3, llama3, mixtral) to active fast Groq model
         resolved_model = model_name
-        if any(dep in model_name for dep in ["llama", "mixtral", "3.3", "8b", "70b"]):
-            resolved_model = "groq/compound"
+        if any(dep in model_name.lower() for dep in ["llama", "mixtral", "3.3", "8b", "70b", "compound"]):
+            resolved_model = "qwen/qwen3.6-27b"
         llm = ChatOpenAI(
             model=resolved_model,
             api_key=api_key,
             base_url="https://api.groq.com/openai/v1",
             temperature=0.0
         )
-        agent_type = "zero-shot-react-description"
+        agent_type = "openai-tools"
     else:
         raise ValueError(f"Unsupported LLM provider: {provider}. Supported: OpenAI, Anthropic, Gemini, Groq")
 
