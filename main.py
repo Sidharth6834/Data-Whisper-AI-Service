@@ -119,6 +119,7 @@ async def query_dataset(
         result = ask_question(agent, question, df)
         
         if result.get("error"):
+            print(f"[Query execution error]: {result['error']}", flush=True)
             return {
                 "answer": result["answer"],
                 "error": result["error"],

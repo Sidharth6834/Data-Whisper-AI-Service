@@ -132,10 +132,14 @@ def create_agent(
         )
         agent_type = "tool-calling"
     elif provider == "Groq":
-        # Map deprecated model names (llama-3.3, llama3, mixtral) to active fast Groq model
+        # Map deprecated model names (llama-3.3, llama3, mixtral, qwen3.6) to active fast Groq model
         resolved_model = model_name
-        if any(dep in model_name.lower() for dep in ["llama", "mixtral", "3.3", "8b", "70b", "compound"]):
-            resolved_model = "qwen/qwen3.6-27b"
+        if any(dep in model_name.lower() for dep in ["llama", "mixtral", "3.3", "8b", "70b", "compound", "3.6"]):
+            resolved_model = "qwen/qwen3.8-27b"
+        elif "qwen" in resolved_model.lower():
+            resolved_model = "qwen/qwen3.8-27b"
+        elif resolved_model not in ["qwen/qwen3.8-27b", "openai/gpt-oss-20b", "openai/gpt-oss-120b"]:
+            resolved_model = "qwen/qwen3.8-27b"
         llm = ChatOpenAI(
             model=resolved_model,
             api_key=api_key,
@@ -167,9 +171,19 @@ def create_agent(
         "Re-examine the exact column names of `df` and correct your code."
     )
 
+    # Provide alias tools so LLMs that output different tool casing (e.g. python_repl or python_replAST) don't fail validation
+    tool_ast = PythonAstREPLTool(locals={'df': dataframe})
+    tool_ast.name = 'python_replAST'
+    tool_ast.description = 'A Python shell. Use this to execute python commands.'
+
+    tool_repl = PythonAstREPLTool(locals={'df': dataframe})
+    tool_repl.name = 'python_repl'
+    tool_repl.description = 'A Python shell. Use this to execute python commands.'
+
     agent = create_pandas_dataframe_agent(
         llm,
         dataframe,
+        extra_tools=[tool_ast, tool_repl],
         verbose=True,
         agent_type=agent_type,
         return_intermediate_steps=True,
@@ -329,7 +343,7 @@ def ask_question(agent: Any, question: str, dataframe: Optional[pd.DataFrame] = 
         code_snippets = []
         
         for action, observation in intermediate_steps:
-            if hasattr(action, "tool") and action.tool in ["python_repl_ast", "python_repl"]:
+            if hasattr(action, "tool") and any(t in str(action.tool).lower() for t in ["python", "repl"]):
                 tool_input = action.tool_input
                 if isinstance(tool_input, dict):
                     code_snippet = tool_input.get("query", tool_input.get("code", str(tool_input)))
@@ -349,7 +363,7 @@ def ask_question(agent: Any, question: str, dataframe: Optional[pd.DataFrame] = 
                     chart_fig = temp_fig
                 plt.close('all')
         except Exception as plot_err:
-            print(f"Chart extraction warning: {str(plot_err)}")
+            print(f"Chart extraction warning: {str(plot_err)}", flush=True)
         
         # Extract the DataFrame resulting from the query if possible
         captured_df = None
@@ -371,6 +385,9 @@ def ask_question(agent: Any, question: str, dataframe: Optional[pd.DataFrame] = 
             "error": None
         }
     except Exception as e:
+        import traceback
+        print(f"[ERROR in ask_question]: {type(e).__name__}: {str(e)}", flush=True)
+        traceback.print_exc()
         return {
             "answer": "An error occurred while processing your query.",
             "generated_code": "",
