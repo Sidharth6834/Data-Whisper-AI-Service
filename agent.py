@@ -144,7 +144,8 @@ def create_agent(
             model=resolved_model,
             api_key=api_key,
             base_url="https://api.groq.com/openai/v1",
-            temperature=0.0
+            temperature=0.0,
+            max_tokens=800
         )
         agent_type = "openai-tools"
     else:
