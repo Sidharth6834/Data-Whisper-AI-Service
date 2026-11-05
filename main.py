@@ -28,11 +28,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.get("/health")
+@app.api_route("/health", methods=["GET", "HEAD"])
 def health_check():
     return {"status": "healthy"}
 
-@app.get("/")
+@app.api_route("/", methods=["GET", "HEAD"])
 def read_root():
     return {"status": "healthy", "service": "DataWhisperer AI Service"}
 
